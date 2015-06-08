@@ -1,4 +1,4 @@
-// +build amd64 !noasm
+// +build !noasm
 
 package asm
 
