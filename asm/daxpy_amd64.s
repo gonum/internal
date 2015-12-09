@@ -41,7 +41,6 @@
 // Don't insert stack check preamble.
 #define NOSPLIT	4
 
-
 // func DaxpyUnitary(alpha float64, x, y, z []float64)
 // This function assumes len(y) >= len(x).
 TEXT ·DaxpyUnitary(SB),NOSPLIT,$0
@@ -83,30 +82,36 @@ E1:
 	RET
 
 
-// func DaxpyInc(alpha float64, x, y []float64, n, incX, incY, ix, iy uintptr)
+// func DaxpyInc(alpha float64, x, y, z []float64, n, incX, incY, incZ, ix, iy, iz uintptr)
 TEXT ·DaxpyInc(SB),NOSPLIT,$0
 	MOVHPD alpha+0(FP), X7
 	MOVLPD alpha+0(FP), X7
 	MOVQ x+8(FP), R8
 	MOVQ y+32(FP), R9
-	MOVQ n+56(FP), CX
-	MOVQ incX+64(FP), R11
-	MOVQ incY+72(FP), R12
-	MOVQ ix+80(FP), SI
-	MOVQ iy+88(FP), DI
+	MOVQ z+56(FP), R10
+	MOVQ n+80(FP), DX
+	MOVQ incX+88(FP), R11
+	MOVQ incY+96(FP), R12
+	MOVQ incZ+104(FP), R13
+	MOVQ ix+112(FP), SI
+	MOVQ iy+120(FP), DI
+	MOVQ iz+128(FP), BP
 
 	MOVQ SI, AX				// nextX = ix
 	MOVQ DI, BX				// nextY = iy
+	MOVQ BP, CX				// nextZ = iz
 	ADDQ R11, AX			// nextX += incX
-	ADDQ R12, BX			// nextY += incX
+	ADDQ R12, BX			// nextY += incY
+	ADDQ R13, CX			// nextZ += incZ
 	SHLQ $1, R11			// indX *= 2
 	SHLQ $1, R12			// indY *= 2
+	SHLQ $1, R13			// indY *= 2
 	
-	SUBQ $2, CX				// n -= 2
+	SUBQ $2, DX				// n -= 2
 	JL V2					// if n < 0 goto V2
 
 U2:	// n >= 0
-	// y[i] += alpha * x[i] unrolled 2x.
+	// z[i] = alpha * x[i] + y[i] unrolled 2x.
 	MOVHPD 0(R8)(SI*8), X0
 	MOVHPD 0(R9)(DI*8), X1
 	MOVLPD 0(R8)(AX*8), X0
@@ -114,27 +119,29 @@ U2:	// n >= 0
 	
 	MULPD X7, X0
 	ADDPD X0, X1
-	MOVHPD X1, 0(R9)(DI*8)
-	MOVLPD X1, 0(R9)(BX*8)
+	MOVHPD X1, 0(R10)(BP*8)
+	MOVLPD X1, 0(R10)(CX*8)
 
 	ADDQ R11, SI			// ix += incX
 	ADDQ R12, DI			// iy += incY
+	ADDQ R13, BP			// iz += incZ
 	ADDQ R11, AX			// nextX += incX
 	ADDQ R12, BX			// nextY += incY
+	ADDQ R13, CX			// nextZ += incZ
 
-	SUBQ $2, CX				// n -= 2
+	SUBQ $2, DX				// n -= 2
 	JGE U2					// if n >= 0 goto U2
 
 V2:
-	ADDQ $2, CX				// n += 2
+	ADDQ $2, DX				// n += 2
 	JLE E2					// if n <= 0 goto E2
 	
-	// y[i] += alpha * x[i] for the last iteration if n is odd.
+	// z[i] = alpha * x[i] + y[i] for the last iteration if n is odd.
 	MOVSD 0(R8)(SI*8), X0
 	MOVSD 0(R9)(DI*8), X1
 	MULSD X7, X0
 	ADDSD X0, X1
-	MOVSD X1, 0(R9)(DI*8)
+	MOVSD X1, 0(R10)(BP*8)
 
 E2:
 	RET

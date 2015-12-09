@@ -13,10 +13,11 @@ func DaxpyUnitary(alpha float64, x, y, z []float64) {
 	}
 }
 
-func DaxpyInc(alpha float64, x, y []float64, n, incX, incY, ix, iy uintptr) {
+func DaxpyInc(alpha float64, x, y, z []float64, n, incX, incY, incZ, ix, iy, iz uintptr) {
 	for i := 0; i < int(n); i++ {
-		y[iy] += alpha * x[ix]
+		z[iz] = alpha*x[ix] + y[iy]
 		ix += incX
 		iy += incY
+		iz += incZ
 	}
 }
