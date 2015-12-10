@@ -5,6 +5,7 @@
 package asm
 
 import (
+	"fmt"
 	"math"
 	"testing"
 )
@@ -157,20 +158,56 @@ func allNaN(x []float64) bool {
 }
 
 // equalStrided returns true if the strided vector x contains elements of the
-// dense vector ref at indices i*inc and NaN values elsewhere, false otherwise.
+// dense vector ref at indices i*inc, false otherwise.
 func equalStrided(ref, x []float64, inc int) bool {
 	if inc < 0 {
 		inc = -inc
 	}
 	for i, v := range x {
-		if i%inc == 0 {
-			if ref[i/inc] != v {
-				return false
-
-			}
-		} else if !math.IsNaN(v) {
+		if i%inc == 0 && ref[i/inc] != v {
 			return false
 		}
 	}
 	return true
+}
+
+// nonStridedWrite returns false if all elements of x at non-stride indices are
+// equal to NaN, true otherwise.
+func nonStridedWrite(x []float64, inc int) bool {
+	if inc < 0 {
+		inc = -inc
+	}
+	for i, v := range x {
+		if i%inc != 0 && !math.IsNaN(v) {
+			return true
+		}
+	}
+	return false
+}
+
+// checkGuardsXY checks whether all given slices contain only NaN values.
+func checkGuardsXY(xFront, xBack, yFront, yBack []float64) error {
+	msg := "out-of-bounds write to %v argument\nfront guard: %v\nback guard: %v"
+	if !allNaN(xFront) || !allNaN(xBack) {
+		return fmt.Errorf(msg, "x", xFront, xBack)
+	}
+	if !allNaN(yFront) || !allNaN(yBack) {
+		return fmt.Errorf(msg, "y", yFront, yBack)
+	}
+	return nil
+}
+
+// checkGuardsXYZ checks whether all given slices contain only NaN values.
+func checkGuardsXYZ(xFront, xBack, yFront, yBack, zFront, zBack []float64) error {
+	msg := "out-of-bounds write to %v argument\nfront guard: %v\nback guard: %v"
+	if !allNaN(xFront) || !allNaN(xBack) {
+		return fmt.Errorf(msg, "x", xFront, xBack)
+	}
+	if !allNaN(yFront) || !allNaN(yBack) {
+		return fmt.Errorf(msg, "y", yFront, yBack)
+	}
+	if !allNaN(zFront) || !allNaN(zBack) {
+		return fmt.Errorf(msg, "z", zFront, zBack)
+	}
+	return nil
 }
