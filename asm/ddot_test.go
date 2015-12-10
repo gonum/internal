@@ -17,37 +17,40 @@ func TestDdotUnitary(t *testing.T) {
 
 		want float64
 	}{
+		// One element
 		{
 			xData: []float64{2},
 			yData: []float64{-3},
 			want:  -6,
 		},
+		// Odd number of elements
 		{
 			xData: []float64{0, 0, 1, 1, 2, -3, -4},
 			yData: []float64{0, 1, 0, 3, -4, 5, -6},
 			want:  4,
+		},
+		// Even number of elements
+		{
+			xData: []float64{0, 0, 1, 1, 2, -3, -4, 5},
+			yData: []float64{0, 1, 0, 3, -4, 5, -6, 7},
+			want:  39,
 		},
 	} {
 		x, xFront, xBack := newGuardedVector(test.xData, 1)
 		y, yFront, yBack := newGuardedVector(test.yData, 1)
 		got := DdotUnitary(x, y)
 
-		if !allNaN(xFront) || !allNaN(xBack) {
-			t.Errorf("test %v: out-of-bounds write to first argument\nfront guard: %v\nback guard: %v\n",
-				i, xFront, xBack)
-		}
-		if !allNaN(yFront) || !allNaN(yBack) {
-			t.Errorf("test %v: out-of-bounds write to second argument\nfront guard: %v\nback guard: %v\n",
-				i, yFront, yBack)
+		if err := checkGuardsXY(xFront, xBack, yFront, yBack); err != nil {
+			t.Errorf("test %v: %v", i, err)
 		}
 		if !equalStrided(test.xData, x, 1) {
-			t.Errorf("test %v: modified first argument", i)
+			t.Errorf("test %v: modified read-only x argument", i)
 		}
 		if !equalStrided(test.yData, y, 1) {
-			t.Errorf("test %v: modified second argument", i)
+			t.Errorf("test %v: modified read-only y argument", i)
 		}
 		if math.IsNaN(got) {
-			t.Errorf("test %v: invalid memory access", i)
+			t.Errorf("test %v: invalid memory read", i)
 			continue
 		}
 
@@ -65,17 +68,26 @@ func TestDdotInc(t *testing.T) {
 		want    float64
 		wantRev float64 // Result when one of the vectors is reversed.
 	}{
+		// One element
 		{
 			xData:   []float64{2},
 			yData:   []float64{-3},
 			want:    -6,
 			wantRev: -6,
 		},
+		// Odd number of elements
 		{
 			xData:   []float64{0, 0, 1, 1, 2, -3, -4},
 			yData:   []float64{0, 1, 0, 3, -4, 5, -6},
 			want:    4,
 			wantRev: -4,
+		},
+		// Even number of elements
+		{
+			xData:   []float64{0, 0, 1, 1, 2, -3, -4, 5},
+			yData:   []float64{0, 1, 0, 3, -4, 5, -6, 7},
+			want:    39,
+			wantRev: 3,
 		},
 	} {
 		for _, incX := range []int{-7, -3, -2, -1, 1, 2, 3, 7} {
@@ -93,22 +105,19 @@ func TestDdotInc(t *testing.T) {
 				}
 				got := DdotInc(x, y, uintptr(n), uintptr(incX), uintptr(incY), uintptr(ix), uintptr(iy))
 
-				if !allNaN(xFront) || !allNaN(xBack) {
-					t.Errorf("test %v: out-of-bounds write to first argument. incX = %v, incY = %v\nfront guard: %v\nback guard: %v\n",
-						i, incX, incY, xFront, xBack)
+				prefix := fmt.Sprintf("test %v, incX = %v, incY = %v", i, incX, incY)
+
+				if err := checkGuardsXY(xFront, xBack, yFront, yBack); err != nil {
+					t.Errorf("%v: %v", prefix, err)
 				}
-				if !allNaN(yFront) || !allNaN(yBack) {
-					t.Errorf("test %v: out-of-bounds write to second argument. incX = %v, incY = %v\nfront guard: %v\nback guard: %v\n",
-						i, incX, incY, xFront, yBack)
+				if nonStridedWrite(x, incX) || !equalStrided(test.xData, x, incX) {
+					t.Errorf("%v: modified read-only x argument", prefix)
 				}
-				if !equalStrided(test.xData, x, incX) {
-					t.Errorf("test %v: modified first argument. incX = %v, incY = %v", i, incX, incY)
-				}
-				if !equalStrided(test.yData, y, incY) {
-					t.Errorf("test %v: modified second argument. incX = %v, incY = %v", i, incX, incY)
+				if nonStridedWrite(y, incY) || !equalStrided(test.yData, y, incY) {
+					t.Errorf("%v: modified read-only y argument", prefix)
 				}
 				if math.IsNaN(got) {
-					t.Errorf("test %v: invalid memory read. incX = %v, incY = %v", i, incX, incY)
+					t.Errorf("%v: invalid memory read", prefix)
 					continue
 				}
 
@@ -117,8 +126,7 @@ func TestDdotInc(t *testing.T) {
 					want = test.wantRev
 				}
 				if got != want {
-					t.Errorf("test %v: unexpected result. incX = %v, incY = %v, want %v, got %v",
-						i, incX, incY, want, got)
+					t.Errorf("%v: unexpected result. want %v, got %v", prefix, want, got)
 				}
 			}
 		}
