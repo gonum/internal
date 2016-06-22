@@ -34,3 +34,35 @@ func AxpyInc(alpha complex128, x, y []complex128, n, incX, incY, ix, iy uintptr)
 //  	idst += incDst
 //  }
 func AxpyIncTo(dst []complex128, incDst, idst uintptr, alpha complex128, x, y []complex128, n, incX, incY, ix, iy uintptr)
+
+// DotcUnitary is
+// for i, v := range x {
+// 	sum += y[i] * cmplx.Conj(v)
+// }
+// return sum
+func DotcUnitary(x, y []complex128) (sum complex128)
+
+// DotcInc is
+// for i := 0; i < int(n); i++ {
+// 	sum += y[iy] * cmplx.Conj(x[ix])
+// 	ix += incX
+// 	iy += incY
+// }
+// return sum
+func DotcInc(x, y []complex128, n, incX, incY, ix, iy int) (sum complex128)
+
+// DotuUnitary is
+// for i, v := range x {
+// 	sum += y[i] * v
+// }
+// return sum
+func DotuUnitary(x, y []complex128) (sum complex128)
+
+// DotuInc is
+// for i := 0; i < int(n); i++ {
+// 	sum += y[iy] * x[ix]
+// 	ix += incX
+// 	iy += incY
+// }
+// return sum
+func DotuInc(x, y []complex128, n, incX, incY, ix, iy int) (sum complex128)
