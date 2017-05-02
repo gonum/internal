@@ -21,37 +21,48 @@
 #define ADDSUBPS_X6_X7    LONG $0xFED00FF2 // @ ADDSUBPS X6, X7
 #define ADDSUBPS_X8_X9    LONG $0xD00F45F2; BYTE $0xC8 // @ ADDSUBPS X8, X9
 
+#define X_PTR SI
+#define Y_PTR DI
+#define LEN CX
+#define TAIL BX
+#define SUM X0
+#define P_SUM X1
+#define INC_X R8
+#define INCx3_X R9
+#define INC_Y R10
+#define INCx3_Y R11
+
 // func DotuInc(x, y []complex64, n, incX, incY, ix, iy uintptr) (sum complex64)
 TEXT ·DotuInc(SB), NOSPLIT, $0
-	MOVQ x_base+0(FP), SI  // SI := &x
-	MOVQ y_base+24(FP), DI // DI := &y
-	PXOR X0, X0            // psum := 0
-	PXOR X1, X1
-	MOVQ n+48(FP), CX      // CX := n
-	CMPQ CX, $0            // if CX == 0 { return }
+	MOVQ x_base+0(FP), X_PTR     // X_PTR = &x
+	MOVQ y_base+24(FP), Y_PTR    // Y_PTR = &y
+	PXOR SUM, SUM                // SUM = 0
+	PXOR P_SUM, P_SUM            // P_SUM = 0
+	MOVQ n+48(FP), LEN           // LEN = n
+	CMPQ LEN, $0                 // if LEN == 0 { return }
 	JE   dotu_end
-	MOVQ ix+72(FP), R8
-	MOVQ iy+80(FP), R9
-	LEAQ (SI)(R8*8), SI    // SI = &(SI[ix])
-	LEAQ (DI)(R9*8), DI    // DI = &(DI[iy])
-	MOVQ incX+56(FP), R8   // R8 := incX * sizeof(complex64)
-	SHLQ $3, R8
-	MOVQ incY+64(FP), R9   // R9 := incY * sizeof(complex64)
-	SHLQ $3, R9
+	MOVQ ix+72(FP), INC_X
+	MOVQ iy+80(FP), INC_Y
+	LEAQ (X_PTR)(INC_X*8), X_PTR // X_PTR = &(X_PTR[ix])
+	LEAQ (Y_PTR)(INC_Y*8), Y_PTR // Y_PTR = &(Y_PTR[iy])
+	MOVQ incX+56(FP), INC_X      // INC_X = incX * sizeof(complex64)
+	SHLQ $3, INC_X
+	MOVQ incY+64(FP), INC_Y      // INC_Y = incY * sizeof(complex64)
+	SHLQ $3, INC_Y
 
-	MOVQ CX, BX
-	ANDQ $3, BX    // BX = n % 4
-	SHRQ $2, CX    // CX = floor( n / 4 )
-	JZ   dotu_tail // if BX == 0 { goto dotu_tail }
+	MOVQ LEN, TAIL
+	ANDQ $3, TAIL  // TAIL = LEN % 4
+	SHRQ $2, LEN   // LEN = floor( LEN / 4 )
+	JZ   dotu_tail // if TAIL == 0 { goto dotu_tail }
 
-	LEAQ (R8)(R8*2), R10 // R10 = R8 * 3
-	LEAQ (R9)(R9*2), R11 // R11 = R9 * 3
+	LEAQ (INC_X)(INC_X*2), INCx3_X // INCx3_X = INC_X * 3
+	LEAQ (INC_Y)(INC_Y*2), INCx3_Y // INCx3_Y = INC_Y * 3
 
 dotu_loop: // do {
-	MOVSD (SI), X3        // X_i = { imag(x[i]), real(x[i]) }
-	MOVSD (SI)(R8*1), X5
-	MOVSD (SI)(R8*2), X7
-	MOVSD (SI)(R10*1), X9
+	MOVSD (X_PTR), X3            // X_i = { imag(x[i]), real(x[i]) }
+	MOVSD (X_PTR)(INC_X*1), X5
+	MOVSD (X_PTR)(INC_X*2), X7
+	MOVSD (X_PTR)(INCx3_X*1), X9
 
 	// X_(i-1) = { imag(x[i]), imag(x[i]) }
 	MOVSHDUP_X3_X2
@@ -66,10 +77,10 @@ dotu_loop: // do {
 	MOVSLDUP_X9_X9
 
 	// X_j = { imag(y[i]), real(y[i]) }
-	MOVSD (DI), X10
-	MOVSD (DI)(R9*1), X11
-	MOVSD (DI)(R9*2), X12
-	MOVSD (DI)(R11*1), X13
+	MOVSD (Y_PTR), X10
+	MOVSD (Y_PTR)(INC_Y*1), X11
+	MOVSD (Y_PTR)(INC_Y*2), X12
+	MOVSD (Y_PTR)(INCx3_Y*1), X13
 
 	// X_i = { imag(y[i]) * real(x[i]), real(y[i]) * real(x[i]) }
 	MULPS X10, X3
@@ -97,27 +108,27 @@ dotu_loop: // do {
 	ADDSUBPS_X6_X7
 	ADDSUBPS_X8_X9
 
-	// psum += X_i
-	ADDPS X3, X0
-	ADDPS X5, X1
-	ADDPS X7, X0
-	ADDPS X9, X1
+	// SUM += X_i
+	ADDPS X3, SUM
+	ADDPS X5, P_SUM
+	ADDPS X7, SUM
+	ADDPS X9, P_SUM
 
-	LEAQ (SI)(R8*4), SI // SI = &(SI[incX*4])
-	LEAQ (DI)(R9*4), DI // DI = &(DI[incY*4])
+	LEAQ (X_PTR)(INC_X*4), X_PTR // X_PTR = &(X_PTR[INC_X*4])
+	LEAQ (Y_PTR)(INC_Y*4), Y_PTR // Y_PTR = &(Y_PTR[INC_Y*4])
 
-	DECQ CX
-	JNZ  dotu_loop // } while --CX > 0
+	DECQ LEN
+	JNZ  dotu_loop // } while --LEN > 0
 
-	ADDPS X1, X0   // X0 = { psum_0 + psum_1 }
-	CMPQ  BX, $0   // if BX == 0 { return }
+	ADDPS P_SUM, SUM // SUM = { P_SUM + SUM }
+	CMPQ  TAIL, $0   // if TAIL == 0 { return }
 	JE    dotu_end
 
 dotu_tail: // do {
-	MOVSD  (SI), X3       // X_i = { imag(x[i]), real(x[i]) }
+	MOVSD  (X_PTR), X3    // X_i = { imag(x[i]), real(x[i]) }
 	MOVSHDUP_X3_X2        // X_(i-1) = { imag(x[i]), imag(x[i]) }
 	MOVSLDUP_X3_X3        // X_i = { real(x[i]), real(x[i]) }
-	MOVUPS (DI), X10      // X_j = { imag(y[i]), real(y[i]) }
+	MOVUPS (Y_PTR), X10   // X_j = { imag(y[i]), real(y[i]) }
 	MULPS  X10, X3        // X_i = { imag(y[i]) * real(x[i]), real(y[i]) * real(x[i]) }
 	SHUFPS $0x1, X10, X10 // X_j = { real(y[i]), imag(y[i]) }
 	MULPS  X10, X2        // X_(i-1) = { real(y[i]) * imag(x[i]), imag(y[i]) * imag(x[i]) }
@@ -126,12 +137,12 @@ dotu_tail: // do {
 	//	imag(result[i]):  imag(y[i])*real(x[i]) + real(y[i])*imag(x[i]),
 	//	real(result[i]):  real(y[i])*real(x[i]) - imag(y[i])*imag(x[i])  }
 	ADDSUBPS_X2_X3
-	ADDPS X3, X0    // sum += X_i
-	ADDQ  R8, SI    // SI += incX
-	ADDQ  R9, DI    // DI += incY
-	DECQ  BX
-	JNZ   dotu_tail // } while --BX > 0
+	ADDPS X3, SUM      // SUM += X_i
+	ADDQ  INC_X, X_PTR // X_PTR += INC_X
+	ADDQ  INC_Y, Y_PTR // Y_PTR += INC_Y
+	DECQ  TAIL
+	JNZ   dotu_tail    // } while --TAIL > 0
 
 dotu_end:
-	MOVSD X0, sum+88(FP) // return sum
+	MOVSD SUM, sum+88(FP) // return SUM
 	RET
