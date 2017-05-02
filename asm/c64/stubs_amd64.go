@@ -34,3 +34,11 @@ func AxpyInc(alpha complex64, x, y []complex64, n, incX, incY, ix, iy uintptr)
 //  	idst += incDst
 //  }
 func AxpyIncTo(dst []complex64, incDst, idst uintptr, alpha complex64, x, y []complex64, n, incX, incY, ix, iy uintptr)
+
+func DotcUnitary(x, y []complex64) (sum complex64)
+
+func DotcInc(x, y []complex64, n, incX, incY, ix, iy int) (sum complex64)
+
+func DotuUnitary(x, y []complex64) (sum complex64)
+
+func DotuInc(x, y []complex64, n, incX, incY, ix, iy int) (sum complex64)
