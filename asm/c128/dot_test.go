@@ -6,35 +6,12 @@ package c128
 
 import (
 	"fmt"
-	"math"
-	"math/cmplx"
 	"testing"
 )
 
 const (
 	msgVal   = "%v: unexpected value at %v Got: %v Expected: %v"
 	msgGuard = "%v: Guard violated in %s vector %v %v"
-)
-
-func checkval(x, y []complex128) (sum complex128) {
-	for i, v := range x {
-		sum += y[i] * conj(v)
-	}
-	return
-}
-
-func checkvalInc(x, y []complex128, n, incX, incY, ix, iy uintptr) (sum complex128) {
-	for i := 0; i < int(n); i++ {
-		sum += y[iy] * conj(x[ix])
-		ix += incX
-		iy += incY
-	}
-	return
-}
-
-var (
-	inf  = math.Inf(1)
-	conj = cmplx.Conj
 )
 
 var dotTests = []struct {
