@@ -36,10 +36,10 @@ func AxpyInc(alpha float32, x, y []float32, n, incX, incY, ix, iy uintptr)
 func AxpyIncTo(dst []float32, incDst, idst uintptr, alpha float32, x, y []float32, n, incX, incY, ix, iy uintptr)
 
 // DdotUnitary is
-//   for i, v := range x {
-//   	sum += float64(y[i]) * float64(v)
-//   }
-//   return
+//  for i, v := range x {
+//  	sum += float64(y[i]) * float64(v)
+//  }
+//  return
 func DdotUnitary(x, y []float32) (sum float64)
 
 // DdotInc is

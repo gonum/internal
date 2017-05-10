@@ -85,10 +85,10 @@ func DotInc(x, y []float32, n, incX, incY, ix, iy int) (sum float32) {
 }
 
 // DdotUnitary is
-//   for i, v := range x {
-//   	sum += float64(y[i]) * float64(v)
-//   }
-//   return
+//  for i, v := range x {
+//  	sum += float64(y[i]) * float64(v)
+//  }
+//  return
 func DdotUnitary(x, y []float32) (sum float64) {
 	for i, v := range x {
 		sum += float64(y[i]) * float64(v)
