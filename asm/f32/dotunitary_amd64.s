@@ -18,10 +18,10 @@
 
 // func DotUnitary(x, y []float32) (sum float32)
 TEXT ·DotUnitary(SB), NOSPLIT, $0
-	MOVQ    x_base+0(FP), X_PTR  // X_PTR := &x
-	MOVQ    y_base+24(FP), Y_PTR // Y_PTR := &y
+	MOVQ    x_base+0(FP), X_PTR  // X_PTR = &x
+	MOVQ    y_base+24(FP), Y_PTR // Y_PTR = &y
 	PXOR    SUM, SUM             // SUM = 0
-	MOVQ    x_len+8(FP), LEN     // LEN := min( len(x), len(y) )
+	MOVQ    x_len+8(FP), LEN     // LEN = min( len(x), len(y) )
 	CMPQ    y_len+32(FP), LEN
 	CMOVQLE y_len+32(FP), LEN
 	CMPQ    LEN, $0
@@ -29,7 +29,7 @@ TEXT ·DotUnitary(SB), NOSPLIT, $0
 
 	XORQ IDX, IDX
 	MOVQ Y_PTR, DX
-	ANDQ $0xF, DX    // Align on 16-byte boundary for ADDPS
+	ANDQ $0xF, DX    // Align on 16-byte boundary for MULPS
 	JZ   dot_no_trim // if DX == 0 { goto axpy_no_trim }
 	SUBQ $16, DX
 
@@ -56,7 +56,7 @@ dot_loop: // Loop unrolled 16x  do {
 	MOVUPS 32(X_PTR)(IDX*4), X4
 	MOVUPS 48(X_PTR)(IDX*4), X5
 
-	MULPS (Y_PTR)(IDX*4), X2   // X_i = y[i:i+1]
+	MULPS (Y_PTR)(IDX*4), X2   // X_i *= y[i:i+1]
 	MULPS 16(Y_PTR)(IDX*4), X3
 	MULPS 32(Y_PTR)(IDX*4), X4
 	MULPS 48(Y_PTR)(IDX*4), X5
@@ -81,9 +81,9 @@ dot_tail4_start: // Reset loop counter for 4-wide tail loop
 
 dot_tail4_loop: // Loop unrolled 4x  do {
 	MOVUPS (X_PTR)(IDX*4), X2 // X_i = x[i:i+1]
-	MULPS  (Y_PTR)(IDX*4), X2 // X_i = y[i:i+1]
+	MULPS  (Y_PTR)(IDX*4), X2 // X_i *= y[i:i+1]
 	ADDPS  X2, SUM            // SUM += X_i
-	ADDQ   $4, IDX            // i += 16
+	ADDQ   $4, IDX            // i += 4
 	DECQ   LEN
 	JNZ    dot_tail4_loop     // } while --LEN > 0
 

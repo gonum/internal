@@ -19,11 +19,11 @@
 
 // func DdotInc(x, y []float32, n, incX, incY, ix, iy int) (sum float64)
 TEXT ·DdotInc(SB), NOSPLIT, $0
-	MOVQ x_base+0(FP), SI  // SI = &x
-	MOVQ y_base+24(FP), DI // DI = &y
-	MOVQ n+48(FP), CX      // BX = min( len(x), len(y) )
-	PXOR X0, X0            // psum = 0
-	CMPQ CX, $0
+	MOVQ x_base+0(FP), X_PTR  // X_PTR = &x
+	MOVQ y_base+24(FP), Y_PTR // Y_PTR = &y
+	MOVQ n+48(FP), LEN        // LEN = n
+	PXOR SUM, SUM             // SUM = 0
+	CMPQ LEN, $0
 	JE   dot_end
 
 	MOVQ ix+72(FP), INC_X

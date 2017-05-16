@@ -18,13 +18,13 @@
 
 // func DdotUnitary(x, y []float32) (sum float32)
 TEXT ·DdotUnitary(SB), NOSPLIT, $0
-	MOVQ    x_base+0(FP), SI  // SI := &x
-	MOVQ    y_base+24(FP), DI // DI := &y
-	MOVQ    x_len+8(FP), CX   // CX := min( len(x), len(y) )
-	CMPQ    y_len+32(FP), CX
-	CMOVQLE y_len+32(FP), CX
-	PXOR    X0, X0            // psum = 0
-	CMPQ    CX, $0
+	MOVQ    x_base+0(FP), X_PTR  // X_PTR = &x
+	MOVQ    y_base+24(FP), Y_PTR // Y_PTR = &y
+	MOVQ    x_len+8(FP), LEN     // LEN = min( len(x), len(y) )
+	CMPQ    y_len+32(FP), LEN
+	CMOVQLE y_len+32(FP), LEN
+	PXOR    SUM, SUM             // psum = 0
+	CMPQ    LEN, $0
 	JE      dot_end
 
 	XORQ IDX, IDX

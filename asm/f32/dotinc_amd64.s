@@ -19,10 +19,10 @@
 
 // func DotInc(x, y []float32, n, incX, incY, ix, iy int) (sum float32)
 TEXT ·DotInc(SB), NOSPLIT, $0
-	MOVQ x_base+0(FP), X_PTR  // X_PTR := &x
-	MOVQ y_base+24(FP), Y_PTR // Y_PTR := &y
+	MOVQ x_base+0(FP), X_PTR  // X_PTR = &x
+	MOVQ y_base+24(FP), Y_PTR // Y_PTR = &y
 	PXOR SUM, SUM             // SUM = 0
-	MOVQ n+48(FP), LEN        // LEN := min( len(x), len(y) )
+	MOVQ n+48(FP), LEN        // LEN = n
 	CMPQ LEN, $0
 	JE   dot_end
 
@@ -45,7 +45,7 @@ TEXT ·DotInc(SB), NOSPLIT, $0
 	LEAQ (INC_X)(INC_X*2), INCx3_X // INCx3_X = INC_X * 3
 	LEAQ (INC_Y)(INC_Y*2), INCx3_Y // INCx3_Y = INC_Y * 3
 
-dot_loop: // Loop unrolled 16x  do {
+dot_loop: // Loop unrolled 4x  do {
 	MOVSS (X_PTR), X2            // X_i = x[i:i+1]
 	MOVSS (X_PTR)(INC_X*1), X3
 	MOVSS (X_PTR)(INC_X*2), X4
