@@ -35,7 +35,7 @@ func guardVector(v []float32, g float32, gdLn int) (guarded []float32) {
 
 func isValidGuard(v []float32, g float32, gdLn int) bool {
 	for i := 0; i < gdLn; i++ {
-		if v[i] != g || v[len(v)-1-i] != g {
+		if !same(v[i], g) || !same(v[len(v)-1-i], g) {
 			return false
 		}
 	}

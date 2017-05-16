@@ -16,7 +16,7 @@ func BenchmarkDotUnitary(t *testing.B) {
 	for _, v := range []int64{1, 2, 3, 4, 5, 10, 100, 1e3, 5e3, 1e4, 5e4} {
 		t.Run(fmt.Sprintf("%s-%d", name, v), func(b *testing.B) {
 			x, y := x[:v], y[:v]
-			b.SetBytes(128 * v)
+			b.SetBytes(32 * v)
 			for i := 0; i < b.N; i++ {
 				DotUnitary(x, y)
 			}
@@ -29,7 +29,7 @@ func BenchmarkDdotUnitary(t *testing.B) {
 	for _, v := range []int64{1, 2, 3, 4, 5, 10, 100, 1e3, 5e3, 1e4, 5e4} {
 		t.Run(fmt.Sprintf("%s-%d", name, v), func(b *testing.B) {
 			x, y := x[:v], y[:v]
-			b.SetBytes(128 * v)
+			b.SetBytes(32 * v)
 			for i := 0; i < b.N; i++ {
 				DdotUnitary(x, y)
 			}
@@ -57,7 +57,7 @@ func BenchmarkDotInc(t *testing.B) {
 	for _, tt := range incsDot {
 		for _, inc := range tt.inc {
 			t.Run(fmt.Sprintf("%s-%d-inc(%d)", name, tt.len, inc), func(b *testing.B) {
-				b.SetBytes(int64(64 * tt.len))
+				b.SetBytes(int64(32 * tt.len))
 				idx := 0
 				if inc < 0 {
 					idx = (-tt.len + 1) * inc
@@ -75,7 +75,7 @@ func BenchmarkDdotInc(t *testing.B) {
 	for _, tt := range incsDot {
 		for _, inc := range tt.inc {
 			t.Run(fmt.Sprintf("%s-%d-inc(%d)", name, tt.len, inc), func(b *testing.B) {
-				b.SetBytes(int64(64 * tt.len))
+				b.SetBytes(int64(32 * tt.len))
 				idx := 0
 				if inc < 0 {
 					idx = (-tt.len + 1) * inc
