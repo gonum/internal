@@ -26,8 +26,8 @@ TEXT ·DdotInc(SB), NOSPLIT, $0
 	CMPQ LEN, $0
 	JE   dot_end
 
-	MOVQ ix+72(FP), INC_X
-	MOVQ iy+80(FP), INC_Y
+	MOVQ ix+72(FP), INC_X        // INC_X = ix
+	MOVQ iy+80(FP), INC_Y        // INC_Y = iy
 	LEAQ (X_PTR)(INC_X*4), X_PTR // X_PTR = &(x[ix])
 	LEAQ (Y_PTR)(INC_Y*4), Y_PTR // Y_PTR = &(y[iy])
 
