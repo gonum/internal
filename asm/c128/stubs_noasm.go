@@ -6,6 +6,8 @@
 
 package c128
 
+import "math/cmplx"
+
 // AxpyUnitary is
 //  for i, v := range x {
 //  	y[i] += alpha * v
@@ -54,4 +56,60 @@ func AxpyIncTo(dst []complex128, incDst, idst uintptr, alpha complex128, x, y []
 		iy += incY
 		idst += incDst
 	}
+}
+
+// DotcUnitary is
+//  for i, v := range x {
+//  	sum += y[i] * cmplx.Conj(v)
+//  }
+//  return sum
+func DotcUnitary(x, y []complex128) (sum complex128) {
+	for i, v := range x {
+		sum += y[i] * cmplx.Conj(v)
+	}
+	return sum
+}
+
+// DotcInc is
+//  for i := 0; i < int(n); i++ {
+//  	sum += y[iy] * cmplx.Conj(x[ix])
+//  	ix += incX
+//  	iy += incY
+//  }
+//  return sum
+func DotcInc(x, y []complex128, n, incX, incY, ix, iy int) (sum complex128) {
+	for i := 0; i < int(n); i++ {
+		sum += y[iy] * cmplx.Conj(x[ix])
+		ix += incX
+		iy += incY
+	}
+	return sum
+}
+
+// DotuUnitary is
+//  for i, v := range x {
+//  	sum += y[i] * v
+//  }
+//  return sum
+func DotuUnitary(x, y []complex128) (sum complex128) {
+	for i, v := range x {
+		sum += y[i] * v
+	}
+	return sum
+}
+
+// DotuInc is
+//  for i := 0; i < int(n); i++ {
+//  	sum += y[iy] * x[ix]
+//  	ix += incX
+//  	iy += incY
+//  }
+//  return sum
+func DotuInc(x, y []complex128, n, incX, incY, ix, iy int) (sum complex128) {
+	for i := 0; i < int(n); i++ {
+		sum += y[iy] * x[ix]
+		ix += incX
+		iy += incY
+	}
+	return sum
 }
